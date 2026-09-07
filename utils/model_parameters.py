@@ -67,7 +67,7 @@ class iTAMLArgs:
     r = 1
 
 # RPSnet Imports
-from models.RPSnet.rps_net import RPS_net_mlp, RPS_net_cifar, generate_path
+from models.RPSnet.rps_net import RPS_net_mlp, RPS_net_cifar, RPS_net, generate_path
 
 
 class MnistArgs:

@@ -14,7 +14,7 @@ from utils.model_parameters import iTAMLArgs
 
 from utils.model_parameters import pycil_algs, get_algorithm_args
 from utils.model_parameters import FOSTERNet, AdaptiveNet, DERNet, IncrementalNet, DSALNet, TagFexNet
-from utils.model_parameters import BasicNet1, RPS_net_cifar, RPS_net_mlp
+from utils.model_parameters import BasicNet1, RPS_net_cifar, RPS_net_mlp, RPS_net
 from utils.model_parameters import XDer, mammoth_load_checkpoint, get_backbone_class, get_dataset_class, original_cwd
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -108,6 +108,8 @@ def load_model(algorithm, dataset, ses, shapArgs):
                 model_path = f"Saliency/{algorithm}/{dataset}/session_{ses}_0_model_best.pth.tar"
                 if dataset == "mnist":
                     model = RPS_net_mlp(alg_args)
+                elif dataset == "imagenet200":
+                    model = RPS_net(alg_args)
                 else:
                     model = RPS_net_cifar(alg_args)
             case "xder":

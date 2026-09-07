@@ -10,6 +10,192 @@ import torch.nn.functional as F
 import numpy as np
 
 
+class RPS_net(nn.Module):
+
+    def __init__(self, args):
+        super(RPS_net, self).__init__()
+        self.args = args
+        self.final_layers = []
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.shap = False
+        self.shap_path = []
+        self.shap_last = -1
+        self.init(None)
+
+    def init(self, best_path):
+
+        """Initialize all parameters"""
+        self.conv1 = []
+        self.conv2 = []
+        self.conv3 = []
+        self.conv4 = []
+        self.conv5 = []
+        self.conv6 = []
+        self.conv7 = []
+        self.conv8 = []
+        self.conv9 = []
+        self.fc1 = []
+
+        # conv1
+        for i in range(self.args.M):
+            exec("self.m1" + str(
+                i) + " = nn.Sequential(nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),nn.BatchNorm2d(64),nn.ReLU())")
+            exec("self.conv1.append(self.m1" + str(i) + ")")
+
+        # conv2
+        for i in range(self.args.M):
+            exec("self.m2" + str(
+                i) + " = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(64),nn.ReLU(), nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(64))")
+            exec("self.conv2.append(self.m2" + str(i) + ")")
+
+        # conv3
+        for i in range(self.args.M):
+            exec("self.m3" + str(
+                i) + " = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(64),nn.ReLU(), nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(64))")
+            exec("self.conv3.append(self.m3" + str(i) + ")")
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        # conv4
+        for i in range(self.args.M):
+            exec("self.m4" + str(
+                i) + " = nn.Sequential(nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(128),nn.ReLU(), nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(128))")
+            exec("self.conv4.append(self.m4" + str(i) + ")")
+        exec("self.m4" + str(
+            "x") + " = nn.Sequential(nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(128),nn.ReLU())")
+        exec("self.conv4.append(self.m4" + str("x") + ")")
+
+        # conv5
+        for i in range(self.args.M):
+            exec("self.m5" + str(
+                i) + " = nn.Sequential(nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(128),nn.ReLU(), nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(128))")
+            exec("self.conv5.append(self.m5" + str(i) + ")")
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        # conv6
+        for i in range(self.args.M):
+            exec("self.m6" + str(
+                i) + " = nn.Sequential(nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(256),nn.ReLU(), nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(256))")
+            exec("self.conv6.append(self.m6" + str(i) + ")")
+        exec("self.m6" + str(
+            "x") + " = nn.Sequential(nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(256),nn.ReLU())")
+        exec("self.conv6.append(self.m6" + str("x") + ")")
+
+        # conv7
+        for i in range(self.args.M):
+            exec("self.m7" + str(
+                i) + " = nn.Sequential(nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(256),nn.ReLU(), nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(256))")
+            exec("self.conv7.append(self.m7" + str(i) + ")")
+        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        # conv8
+        for i in range(self.args.M):
+            exec("self.m8" + str(
+                i) + " = nn.Sequential(nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512),nn.ReLU(), nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512))")
+            # exec("self.m8" + str(i) + " = nn.Sequential(nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512),nn.ReLU(), nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512))")
+            exec("self.conv8.append(self.m8" + str(i) + ")")
+        exec("self.m8" + str(
+            "x") + " = nn.Sequential(nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512),nn.ReLU())")
+        exec("self.conv8.append(self.m8" + str("x") + ")")
+
+        # conv9
+        for i in range(self.args.M):
+            exec("self.m9" + str(
+                i) + " = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512),nn.ReLU(), nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),nn.BatchNorm2d(512))")
+            exec("self.conv9.append(self.m9" + str(i) + ")")
+
+        if len(self.final_layers) < 1:
+            self.final_layer1 = nn.Linear(512, self.args.num_class)
+            # self.final_layer1 = nn.Linear(512, 1000)
+            self.final_layers.append(self.final_layer1)
+
+        self.to(self.device)
+
+    def set_shap(self, mode):
+        self.shap = mode
+
+    def forward(self, x, path, last):
+        if self.shap:
+            last = -1
+        M = self.args.M
+        div = 1
+        p = 0.5
+
+        y = self.conv1[0](x)
+        for j in range(1, self.args.M):
+            if (path[0][j] == 1):
+                y = y + self.conv1[j](x)
+        x = F.relu(y)
+
+        y = self.conv2[0](x)
+        for j in range(1, self.args.M):
+            if (path[1][j] == 1):
+                y = y + self.conv2[j](x)
+        x = y + x
+        x = F.relu(x)
+
+        y = self.conv3[0](x)
+        for j in range(1, self.args.M):
+            if (path[2][j] == 1):
+                y = y + self.conv3[j](x)
+        x = y + x
+        x = F.relu(x)
+        x = self.pool1(x)
+
+        y = self.conv4[-1](x)
+        for j in range(self.args.M):
+            if (path[3][j] == 1):
+                y = y + self.conv4[j](x)
+        x = y
+        x = F.relu(x)
+
+        y = self.conv5[0](x)
+        for j in range(1, self.args.M):
+            if (path[4][j] == 1):
+                y = y + self.conv5[j](x)
+        x = y + x
+        x = F.relu(x)
+        x = self.pool2(x)
+
+        y = self.conv6[-1](x)
+        for j in range(self.args.M):
+            if (path[5][j] == 1):
+                y = y + self.conv6[j](x)
+        x = y
+        x = F.relu(x)
+
+        y = self.conv7[0](x)
+        for j in range(1, self.args.M):
+            if (path[6][j] == 1):
+                y = y + self.conv7[j](x)
+        x = y
+        x = F.relu(x)
+        x = self.pool3(x)
+
+        y = self.conv8[-1](x)
+        for j in range(self.args.M):
+            if (path[7][j] == 1):
+                y = y + self.conv8[j](x)
+        x = y
+        x = F.relu(x)
+
+        y = self.conv9[0](x)
+        for j in range(1, self.args.M):
+            if (path[8][j] == 1):
+                y = y + self.conv9[j](x)
+        x = y + x
+        x = F.relu(x)
+        x = self.pool4(x)
+
+        if self.args.dataset == 'imagenet200':
+            x = F.adaptive_avg_pool2d(x, (1, 1))
+        else:
+            x = F.avg_pool2d(x, (7, 7), stride=(1, 1))
+        x = x.view(-1, 512)
+        x = self.final_layers[last](x)
+
+        return x
+
 
 class RPS_net_cifar(nn.Module):
 

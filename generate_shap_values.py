@@ -1,11 +1,11 @@
 import numpy as np
 import shap
 import torch
-from torch.utils.data import Subset
+from torch.utils.data import Subset, DataLoader
 from tqdm import tqdm
 
 # Custom Imports
-from utils.setup_args import SHAPArgs, create_shap_value_filepath
+from utils.setup_args import SHAPArgs, create_shap_value_filepath, get_subset_filepath
 from utils.load_models import load_model, load_meta_models
 from utils.model_parameters import pycil_algs
 
@@ -14,7 +14,7 @@ from models.RPSnet.rps_net import generate_path
 
 
 
-algorithm = "der"
+algorithm = "foster"
 dataset = "cifar10"
 shapArgs = SHAPArgs(algorithm, dataset)
 
@@ -25,7 +25,9 @@ dataset = sys.argv[2]
 #'''
 
 first_last_only = True
-filepath = create_shap_value_filepath(shapArgs, first_last_only)
+subset_testing = True
+subset_num = 1
+filepath = create_shap_value_filepath(shapArgs, first_last_only, subset_testing, subset_num)
 
 print(f"Alg: {algorithm}\nDataset: {dataset}\nFirst/Last: {first_last_only}")
 num_tasks = shapArgs.dataset_params.num_task
@@ -59,28 +61,34 @@ sal_dataloader = sdl.ShapDataloader(shapArgs)
 # Get train dataset
 train_set = sal_dataloader.get_shap_train_set(dataset)
 
-# Get test dataset
-for i in range(num_tasks):
-    if dataset == "cifar100":
-        sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(i * 10, (i * 10) + 10), 20, batch_size=10000)
-    elif dataset == "imagenet200":
-        sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(i * 20, (i * 20) + 20), 20, batch_size=10000)
-    else:
-        ###---Updated to take initial classes learned into account---###
-        if i == 0:
-            sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(shapArgs.dataset_params.init_cls),
-                                                                          shapArgs.dataset_params.shap_samples, batch_size=10000)
+if subset_testing:
+    shap_subset = torch.load(get_subset_filepath(shapArgs), weights_only=False)[subset_num-1]
+    shap_dataloader = DataLoader(shap_subset, batch_size=10000, shuffle=False)
+    *_, test_imgs, test_labels = next(iter(shap_dataloader))
+    print("Loaded Imgs:", len(test_imgs))
+else:
+    # Get test dataset
+    for i in range(num_tasks):
+        if dataset == "cifar100":
+            sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(i * 10, (i * 10) + 10), 20, batch_size=10000)
+        elif dataset == "imagenet200":
+            sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(i * 20, (i * 20) + 20), 20, batch_size=10000)
         else:
-            sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range((shapArgs.dataset_params.init_cls-cls_per_task)+i*cls_per_task,
-                                                                            shapArgs.dataset_params.init_cls+(i*cls_per_task)),
-                                                                            shapArgs.dataset_params.shap_samples, batch_size=10000)
-        ###----------------------------------------------------------###
-    print("Len of sal_imgs:", len(sal_imgs))
-    if i == 0:
-        test_imgs, test_labels = sal_imgs, sal_labels
-    else:
-        test_imgs = torch.cat((test_imgs, sal_imgs), 0)
-        test_labels = torch.cat((test_labels, sal_labels), 0)
+            ###---Updated to take initial classes learned into account---###
+            if i == 0:
+                sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(shapArgs.dataset_params.init_cls),
+                                                                              shapArgs.dataset_params.shap_samples, batch_size=10000)
+            else:
+                sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range((shapArgs.dataset_params.init_cls-cls_per_task)+i*cls_per_task,
+                                                                                shapArgs.dataset_params.init_cls+(i*cls_per_task)),
+                                                                                shapArgs.dataset_params.shap_samples, batch_size=10000)
+            ###----------------------------------------------------------###
+        print("Len of sal_imgs:", len(sal_imgs))
+        if i == 0:
+            test_imgs, test_labels = sal_imgs, sal_labels
+        else:
+            test_imgs = torch.cat((test_imgs, sal_imgs), 0)
+            test_labels = torch.cat((test_labels, sal_labels), 0)
 
 # Reshape MNIST test images for RPSnet
 if algorithm == "RPSnet" and dataset == "mnist":
@@ -128,8 +136,9 @@ for sample in tqdm(range(len(test_imgs)), desc="Progress"):
         else:
             continue
 
+
     # Intermittent saving in case of crash
-    np.save(filepath, shap_dict)
+    #np.save(filepath, shap_dict)
 
 # Final save shap values to filepath
 np.save(filepath, shap_dict)
