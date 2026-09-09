@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import tqdm
 import scipy.io
 
+from generate_shap_values import subset_testing, subset_num
 from utils.setup_args import SHAPArgs, create_shap_value_filepath, create_shapc_savepath
 
 
@@ -146,8 +147,10 @@ if __name__ == "__main__":
 
         first_last_only = True
         all_samples = False
-        filepath = create_shap_value_filepath(shapArgs, first_last_only) + ".npy"
-        savepath = create_shapc_savepath(shapArgs, first_last_only, all_samples)
+        subset_testing = True
+        subset_num = 0
+        filepath = create_shap_value_filepath(shapArgs, first_last_only, subset_testing, subset_num) + ".npy"
+        savepath = create_shapc_savepath(shapArgs, first_last_only, all_samples, subset_testing, subset_num)
 
 
         # Load the SHAP Values
