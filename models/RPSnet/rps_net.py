@@ -508,8 +508,8 @@ def generate_path(ses, dataset, args):
 
     previous_ses = ses - 1
 
-    fixed_path_filepath = f"Saliency/RPSnet/{dataset}/fixed_path_{ses}_0.npy"
-    path_filepath = f"Saliency/RPSnet/{dataset}/path_{ses}_0.npy"
+    fixed_path_filepath = f"saved_models/RPSnet/{dataset}/fixed_path_{ses}_0.npy"
+    path_filepath = f"saved_models/RPSnet/{dataset}/path_{ses}_0.npy"
 
     # Load the arrays
     fixed_path = np.load(fixed_path_filepath)

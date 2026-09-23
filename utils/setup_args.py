@@ -19,7 +19,7 @@ def create_shap_value_filepath(shapArgs, first_last_only=True, subset_testing=Fa
     if subset_testing:
         if not os.path.isdir(f"{shap_value_filepath_root}subset_testing/{shapArgs.dataset_name}"):
             os.makedirs(f"{shap_value_filepath_root}subset_testing/{shapArgs.dataset_name}")
-            return f"{shap_value_filepath_root}subset_testing/{shapArgs.dataset_name}/{shapArgs.algorithm}_shap_vals_subset_{subset_num}"
+        return f"{shap_value_filepath_root}subset_testing/{shapArgs.dataset_name}/{shapArgs.algorithm}_shap_vals_subset_{subset_num}"
     else:
         if not os.path.isdir(f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}"):
             os.makedirs(f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}")
@@ -30,16 +30,19 @@ def create_shap_value_filepath(shapArgs, first_last_only=True, subset_testing=Fa
             return f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}/shap_values_full_{total_samples}"
 
 
-def create_shapc_savepath(shapArgs, first_last_only=True, all_samples=False):
+def create_shapc_savepath(shapArgs, first_last_only=True, all_samples=False, subset_testing=False):
     if all_samples:
         total_samples = 1000
     else:
         total_samples = shapArgs.dataset_params.num_task * shapArgs.dataset_params.shap_samples * shapArgs.dataset_params.class_per_task
 
-    if first_last_only:
-        return f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}/shapc_vals_first_last_{total_samples}.mat"
+    if subset_testing:
+        return f"{shap_value_filepath_root}subset_testing/{shapArgs.dataset_name}/{shapArgs.algorithm}_shapc_vals_subset_{subset_num}.mat"
     else:
-        return f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}/shapc_vals_full_{total_samples}.mat"
+        if first_last_only:
+            return f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}/shapc_vals_first_last_{total_samples}.mat"
+        else:
+            return f"{shap_value_filepath_root}{shapArgs.algorithm}/{shapArgs.dataset_name}/shapc_vals_full_{total_samples}.mat"
 
 def create_preds_savepath(shapArgs):
     return f"{shap_value_filepath_root}/preds/{shapArgs.algorithm}_{shapArgs.dataset_name}_preds.mat"

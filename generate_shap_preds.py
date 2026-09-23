@@ -15,16 +15,15 @@ from models.RPSnet.rps_net import generate_path
 
 
 
-algorithm = "der"
+algorithm = "RPSnet"
 dataset = "cifar10"
 shapArgs = SHAPArgs(algorithm, dataset)
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
-
 first_last_only = True
 subset_testing = True
-subset_num = 0
+subset_num = 21
 filepath = create_shap_value_filepath(shapArgs, first_last_only, subset_testing, subset_num) + ".npy"
 preds_savepath = create_preds_savepath(shapArgs)
 
@@ -33,6 +32,12 @@ num_class = shapArgs.dataset_params.num_class
 cls_per_task = shapArgs.dataset_params.class_per_task
 shap_samples = shapArgs.dataset_params.shap_samples
 
+if algorithm == "iTAML":
+    loaded_models = []
+    for i in range(num_tasks):
+        loaded_models.extend(load_meta_models(dataset, i))
+else:
+    loaded_models = [load_model(algorithm, dataset, i, shapArgs=shapArgs).to(device) for i in range(num_tasks)]
 
 shap_values_loaded = np.load(filepath, allow_pickle=True)  # ['shap_dict']
 num_imgs = len(shap_values_loaded[()].keys())
@@ -74,7 +79,14 @@ else:
 #print("Len of sal_imgs:", len(test_imgs))
 test_imgs, test_labels = test_imgs.to(device), test_labels.to(device)
 
-loaded_models = [load_model(algorithm, dataset, i, shapArgs=shapArgs).to(device) for i in range(num_tasks)]
+'''
+if algorithm == "iTAML":
+    loaded_models = []
+    for i in range(num_tasks):
+        loaded_models.extend(load_meta_models(dataset, i))
+else:
+    loaded_models = [load_model(algorithm, dataset, i, shapArgs=shapArgs).to(device) for i in range(num_tasks)]
+'''
 
 samples = range(shap_samples*(num_class-cls_per_task))
 
@@ -82,7 +94,7 @@ for sample in samples:
     test_sample = shap_dict[f'{sample}']
     test_sess = list(test_sample.keys())
     test_sess.remove(test_sess[1])
-    #print(test_sess)
+    print(test_sess)
     ses = int(test_sess[0][-1])
 
     #sample_multiplier = cls_per_task * shap_samples
@@ -113,6 +125,7 @@ for sample in samples:
         # Store predictions
 
         # Load the saved preds, if possible
+        '''
         if os.path.isfile(preds_savepath):
             loaded_preds = scipy.io.loadmat(preds_savepath, simplify_cells=True)
             keys_to_remove = ['__header__', '__version__', '__globals__']
@@ -128,7 +141,7 @@ for sample in samples:
         if f'sample{sample}' not in pred_dict[f'{algorithm}']: pred_dict[f'{algorithm}'][f'sample{sample}'] = {}
         pred_dict[f'{algorithm}'][f'sample{sample}'][f'pred_{test_sess[0]}'] = preds[0].item()
         pred_dict[f'{algorithm}'][f'sample{sample}'][f'pred_{test_sess[-1]}'] = preds[1].item()
-
+        '''
 
         # Save shap values to filepath
-        scipy.io.savemat(preds_savepath, pred_dict)
+        #scipy.io.savemat(preds_savepath, pred_dict)

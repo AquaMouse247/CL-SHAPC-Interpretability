@@ -1,8 +1,12 @@
 ### Load compare dict
+from fileinput import filename
+
 import numpy as np
-import torch
-import shap
-import copy
+import os
+import re
+import scipy
+import textwrap
+import addcopyfighandler
 
 from utils.model_parameters import pycil_algs
 # Custom Imports
@@ -17,6 +21,8 @@ def format_name(name):
         return "TagFex"
     elif name == "dsal":
         return "DS-AL"
+    elif name == "xder":
+        return "X-DER"
     elif name in pycil_algs or name == "xder":
         return name.upper()
     else:
@@ -46,10 +52,55 @@ def add_algorithm_labels(fig, axis, algs):
                 ha="center",va="bottom", fontsize=14,
                 fontweight="bold")
 
+def get_pred_labels(data_name, data_classes, alg_name, sample, mat_file=False):
+    if mat_file:
+        filename = f"analysis/preds/{data_name}_preds.mat"
+
+        if not os.path.isfile(filename):
+            print(f"Could not find preds file at '{filename}'.")
+            return
+        else:
+            loaded_preds = scipy.io.loadmat(filename, simplify_cells=True)
+            keys_to_remove = ['__header__', '__version__', '__globals__']
+            pred_dict = {key: value for key, value in loaded_preds.items() if key not in keys_to_remove}
+
+            test_sess = list(pred_dict['preds_data'][f'{alg_name}'][f'sample{sample}'].keys())
+            pred1 = pred_dict['preds_data'][f'{alg_name}'][f'sample{sample}'][test_sess[0]]
+            pred2 = pred_dict['preds_data'][f'{alg_name}'][f'sample{sample}'][test_sess[1]]
+
+            pred1, pred2 = data_classes[int(pred1)], data_classes[int(pred2)]
+
+    else:
+        filename = f"analysis/preds/{alg_name}_{data_name}_preds.out"
+
+        if not os.path.exists(filename):
+            print(f"Could not find preds file at '{filename}'.")
+            return
+
+        with open(filename, "r") as f:
+            lines = f.readlines()
+
+        for line in lines:
+            if "Sample" not in line:
+                continue
+
+            parts = line.split(":")
+
+            tokens = re.findall(r"\d+", parts[0])
+            file_sample = tokens[0]
+            if not int(file_sample) == sample:
+                continue
+
+            prediction = re.findall(r"\d+", parts[1])
+            pred1 = data_classes[int(prediction[0])]
+            pred2 = data_classes[int(prediction[1])]
+
+    return [pred1, pred2]
+
 
 
 # Select Algorithm and Dataset
-algorithm = "icarl"
+algorithm = "RPSnet"
 dataset = "cifar100"
 
 vis_all_algs = True
@@ -103,12 +154,12 @@ for a, alg in enumerate(alg_list):
     Samples to Try: 55
     '''
 
-    sample = 11
+    sample = 953
     test_sample = shap_dict[f'{sample}']
     test_sess = list(test_sample.keys())
     test_sess.remove(test_sess[1])
-    #print(test_sess)
-    ses, last_ses = int(test_sess[0][-1]), int(test_sess[1][-1])
+    print(test_sess)
+    ses, last_ses = int(test_sess[0].replace('ses', '')), int(test_sess[-1].replace('ses', ''))
 
     '''
     if dataset == "mnist":
@@ -132,22 +183,22 @@ for a, alg in enumerate(alg_list):
     sal_dataloader = sdl.ShapDataloader(shapArgs)
 
     if dataset == "cifar100":
-        sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(ses * 10, (ses * 10) + 10), 20, batch_size=10000)
+        sal_imgs, sal_labels, sal_classes, STD, MEAN = sal_dataloader.load_data(range(ses * 10, (ses * 10) + 10), 20, batch_size=10000)
     elif dataset == "imagenet200":
-        sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(ses * 20, (ses * 20) + 20), 20, batch_size=10000)
+        sal_imgs, sal_labels, sal_classes, STD, MEAN = sal_dataloader.load_data(range(ses * 20, (ses * 20) + 20), 20, batch_size=10000)
     else:
         ###---Updated to take initial classes learned into account---###
         if ses == 0:
-            sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range(shapArgs.dataset_params.init_cls),
+            sal_imgs, sal_labels, sal_classes, STD, MEAN = sal_dataloader.load_data(range(shapArgs.dataset_params.init_cls),
                                                                           shapArgs.dataset_params.shap_samples, batch_size=10000)
         else:
-            sal_imgs, sal_labels, _, STD, MEAN = sal_dataloader.load_data(range((shapArgs.dataset_params.init_cls-cls_per_task)+ses*cls_per_task,
+            sal_imgs, sal_labels, sal_classes, STD, MEAN = sal_dataloader.load_data(range((shapArgs.dataset_params.init_cls-cls_per_task)+ses*cls_per_task,
                                                                             shapArgs.dataset_params.init_cls+(ses*cls_per_task)),
                                                                             shapArgs.dataset_params.shap_samples, batch_size=10000)
         ###----------------------------------------------------------###
     #print("Len of sal_imgs:", len(sal_imgs))
 
-    test_imgs, test_labels = sal_imgs, sal_labels
+    test_imgs, test_labels, test_classes = sal_imgs, sal_labels, sal_classes
 
     # Get test image
     samples = range(shap_samples*(num_class-cls_per_task))
@@ -155,11 +206,15 @@ for a, alg in enumerate(alg_list):
     adj_sample = sample - (ses * cls_per_task * shap_samples)
 
     test_img = test_imgs[adj_sample]#.unsqueeze(0)
+    test_label = test_labels[adj_sample]
     if dataset != "mnist":
         test_img = sal_dataloader.denormalize(test_img)
     test_img_np = np.transpose(test_img.numpy(), [1, 2, 0])
+    #print(f"Test Label:", test_classes[test_label])
 
     labels = [f'ses{ses}', f'ses{num_tasks-1}']
+    use_mat_file = True if dataset == "cifar10" else False
+    preds = get_pred_labels(dataset, test_classes, alg, sample, mat_file=use_mat_file)
     #shap.image_plot(np.concatenate(test_shaps), np.stack([test_img_np,test_img_np]), true_labels=labels, cmap='plasma')
 
 
@@ -175,6 +230,8 @@ for a, alg in enumerate(alg_list):
     for ax in plt_axis[:, alg_col_index]:
         ax.imshow(test_img_np)
         ax.set_title("Original Image")
+        label_str = f"True Label: {test_classes[test_label]}"
+        if alg_col_index == 0: ax.set_xlabel("\n".join(textwrap.wrap(label_str, width=12)), fontsize=10)
     for ax in plt_axis[:, alg_col_index+1]:
         ax.imshow(np.mean(test_img_np, axis=2), cmap="gray")
 
@@ -187,9 +244,11 @@ for a, alg in enumerate(alg_list):
 
     hm1 = plt_axis[0, alg_col_index+1].imshow(s0, cmap='plasma', vmin=vmin, vmax=vmax, alpha=0.5)
     plt_axis[0, alg_col_index+1].set_title(labels[0])
+    plt_axis[0, alg_col_index + 1].set_xlabel(f"Pred: {preds[0]}")
 
     hm2 = plt_axis[1, alg_col_index+1].imshow(s1, cmap='plasma', vmin=vmin, vmax=vmax, alpha=0.5)
     plt_axis[1, alg_col_index+1].set_title(labels[1])
+    plt_axis[1, alg_col_index + 1].set_xlabel(f"Pred: {preds[1]}")
 
     for ax in plt_axis.flat:
         ax.set_xticks([])
@@ -212,8 +271,14 @@ for a, alg in enumerate(alg_list):
         #figs.append(copy.deepcopy(plt_fig))
 
 
-print(figs)
+#print(figs)
 #for f in figs:
 #    f.show(blocking=True)
 #    pass
+if not vis_all_algs:
+    cbar = plt_fig.colorbar(hm2, ax=plt_axis.ravel().tolist(), orientation='vertical', pad=0.04)
+    cbar.ax.set_title("Most Important", pad=8, size=12)
+    cbar.ax.set_xlabel("Least Important", labelpad=8, size=12)
+    plt.suptitle(format_name(algorithm), fontsize=14, fontweight="bold")
+
 plt.show()

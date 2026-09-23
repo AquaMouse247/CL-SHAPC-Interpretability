@@ -1,4 +1,4 @@
-function scn = untitled2(sample, pred1, pred2, shapc_threshold, dataset, shapc_struct)
+function scn = classify_scenario(sample, pred1, pred2, shapc_threshold, dataset, shapc_struct)
 %classify_scenario(sample, pred1, pred2, shapc_threshold) Classifies a
 %image sample into one of four SHAPC-prediction scenarios.
 %--------------------------------------------------------------------

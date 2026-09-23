@@ -102,10 +102,10 @@ def load_model(algorithm, dataset, ses, shapArgs):
     else:
         match algorithm:
             case "iTAML":
-                model_path = f"Saliency/{algorithm}/{dataset}/session_{ses}_model_best.pth.tar"
+                model_path = f"saved_models/{algorithm}/{dataset}/session_{ses}_model_best.pth.tar"
                 model = BasicNet1(alg_args, 0, device=device)
             case "RPSnet":
-                model_path = f"Saliency/{algorithm}/{dataset}/session_{ses}_0_model_best.pth.tar"
+                model_path = f"saved_models/{algorithm}/{dataset}/session_{ses}_0_model_best.pth.tar"
                 if dataset == "mnist":
                     model = RPS_net_mlp(alg_args)
                 elif dataset == "imagenet200":
@@ -337,7 +337,7 @@ def load_meta_models(dataset, sess):
         shuffle=True,
         seed=1,
         batch_size=args.train_batch,
-        workers=args.workers,
+        workers=0,#args.workers,
         validation_split=args.validation,
         increment=args.class_per_task,
     )
@@ -357,5 +357,5 @@ def load_meta_models(dataset, sess):
 
     _, _, _, testloader, for_memory = inc_dataset.new_task(memory)
     memory = inc_dataset.get_memory(memory, for_memory)
-    model = load_model("iTAML", dataset, args.sess, args=args)
+    model = load_model("iTAML", dataset, args.sess, args)
     return meta_test(model, memory, inc_dataset, testloader)

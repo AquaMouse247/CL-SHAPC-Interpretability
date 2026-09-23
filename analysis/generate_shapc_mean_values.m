@@ -6,7 +6,7 @@ setup; % Loads alg list and dataset_configs
 
 %algs = ["iTAML"];       
 
-dataset = 'cifar10';
+dataset = 'imagenet200';
 config = dataset_configs.(dataset);
 num_sessions = config.num_sessions;
 num_classes = config.num_classes;
@@ -102,14 +102,14 @@ first_last_1000_times = column_data3;
 shapc_table_first_last_1000 = table(column_data1, column_data2, column_data3, ...
     'VariableNames', columns, 'RowNames', rows);
 sorted_shapc_first_last_1000 = sortrows(shapc_table_first_last_1000, {'SHAPC-Mean (%)'}, {'ascend'});
-disp(sorted_shapc_first_last_1000) %[output:63fdabc1]
+disp(sorted_shapc_first_last_1000) %[output:437cf833]
 
 
 %[appendix]{"version":"1.0"}
 %---
 %[metadata:view]
-%   data: {"layout":"onright","rightPanelPercent":34.1}
+%   data: {"layout":"onright","rightPanelPercent":40.4}
 %---
-%[output:63fdabc1]
-%   data: {"dataType":"text","outputData":{"text":"              <strong>Accuracy (%)<\/strong>    <strong>SHAPC-Mean (%)<\/strong>    <strong>Time (hrs)<\/strong>\n              <strong>____________<\/strong>    <strong>______________<\/strong>    <strong>__________<\/strong>\n\n    <strong>RPSnet<\/strong>        61.35           23.217          6.9869  \n    <strong>xder  <\/strong>         55.8           25.706            0.44  \n    <strong>foster<\/strong>        71.61           28.713         0.50417  \n    <strong>memo  <\/strong>        88.36           29.583         0.68417  \n    <strong>iTAML <\/strong>        93.45           30.672         0.57083  \n    <strong>icarl <\/strong>        86.45           31.202         0.15694  \n    <strong>dsal  <\/strong>        72.15            36.43          0.1775  \n    <strong>tagfex<\/strong>       90.402           40.791          1.8206  \n    <strong>der   <\/strong>           89           41.909          1.5094  \n\n","truncated":false}}
+%[output:437cf833]
+%   data: {"dataType":"text","outputData":{"text":"              <strong>Accuracy (%)<\/strong>    <strong>SHAPC-Mean (%)<\/strong>    <strong>Time (hrs)<\/strong>\n              <strong>____________<\/strong>    <strong>______________<\/strong>    <strong>__________<\/strong>\n\n    <strong>iTAML <\/strong>         40.1           22.723          17.474  \n    <strong>xder  <\/strong>        40.05           23.432             NaN  \n    <strong>icarl <\/strong>        38.75           24.426          8.6244  \n    <strong>RPSnet<\/strong>        22.49           24.642             NaN  \n    <strong>memo  <\/strong>        55.25           28.207          20.867  \n    <strong>foster<\/strong>        54.62           28.409          18.886  \n    <strong>der   <\/strong>        57.38            37.31           52.08  \n    <strong>dsal  <\/strong>       38.248           37.589             NaN  \n    <strong>tagfex<\/strong>       57.939           37.618             NaN  \n\n","truncated":false}}
 %---

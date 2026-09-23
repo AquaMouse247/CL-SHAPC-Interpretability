@@ -5,6 +5,14 @@ def get_algorithm_args(algorithm, dataset):
     args = None
     if algorithm == "iTAML":
         args = iTAMLArgs
+        args.dataset = dataset
+        match dataset:
+            case "cifar10":
+                args.num_class = 10
+            case "cifar100":
+                args.num_class = 100
+            case "imagenet200":
+                args.num_class = 200
     if algorithm == "RPSnet":
         args = MnistArgs
     if algorithm == "foster":

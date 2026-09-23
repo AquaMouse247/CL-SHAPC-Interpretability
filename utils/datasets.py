@@ -7,7 +7,7 @@ def get_dataset_params(dataset):
         return SHAPCifar10
     if dataset == "cifar100":
         return SHAPCifar100
-    if dataset == "tinyimagenet":
+    if dataset == "imagenet200":
         return SHAPTinyImageNet
 
 

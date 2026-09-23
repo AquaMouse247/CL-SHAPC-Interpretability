@@ -25,7 +25,7 @@ class BasicNet1(nn.Module):
         self.use_multi_fc = use_multi_fc
         self.args = args
         # For Saliency
-        self.saliency = False
+        self.shap = False
 
         if(self.args.dataset=="mnist"):
             self.convnet = RPS_net_mlp()
@@ -49,11 +49,11 @@ class BasicNet1(nn.Module):
         
     def forward(self, x):
         x1, x2 = self.convnet(x)
-        if self.saliency: return x1
+        if self.shap: return x1
         else: return x1, x2
     
-    def set_saliency(self, mode):
-        self.saliency = mode
+    def set_shap(self, mode):
+        self.shap = mode
 
     @property
     def features_dim(self):
