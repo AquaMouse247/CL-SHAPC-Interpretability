@@ -1,0 +1,40 @@
+Scn1: Low SHAPC, Low Accuracy (untrustworthy and inaccurate)
+Scn2: High SHAPC, Low Accuracy (trustworthy but inaccurate)
+Scn3: Low SHAPC, High Accuracy (accurate but untrustworthy)
+Scn4: High SHAPC, High Accuracy (accurate and trustworthy)
+
+Note: Fix Heatmap Scale
+
+C10
+------------------------------
+Thresholds:
+
+-------------------------------
+'S3: All Scn 3 except RPSnet(2), FOSTER(1), & XDER(4)
+S22: All Scn 1
+S28: All Scn 1 except DER(3) & XDER(2)
+S66: All Scn 3 except iTAML(1), RPSnet(2), & XDER(2)
+'S190: All Scn 4 except iTAML(1), RPSnet(2), iCARL(1), & TagFex(3)
+S210: Scn 2, Check Again
+S257: All Scn 4 except RPSnet(2) & XDER(2)
+'S338: All Scn 2 except RPSnet(2, 22.8889)
+S405: All Scn 2 except iTAML(1) & TagFex(1)
+
+
+
+C100
+------------------------------
+Thresholds:
+iTAML - 22.8398
+RPSnet - 25.4914
+FOSTER - 23.9190
+-------------------------------
+S11: All Scn 4 except RPSnet(2), iCARL(2), & XDER(3)
+S22: All Scn 1
+*S30: All Scn 1
+S252: All Scn 4 except iTAML(2), RPSnet(2), DS-AL(1), & XDER(1)
+S637: All Scn 4 except iTAML(1, 22.0855), FOSTER(3, 23.6760) // RPSnet (4, 27.1262)
+*S912: All Scn 2
+*S953: All Scn 4 except iTAML(2), iCARL(2)
+'S1110: All Scn 2
+*S1183 All Scn 2
