@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import shap
 import torch
@@ -13,20 +15,23 @@ import utils.shap_dataloader as sdl
 from models.RPSnet.rps_net import generate_path
 
 
+if len(sys.argv[1:]) > 2:
+    # Used when running with a shell script.
+    algorithm = sys.argv[1]
+    dataset = sys.argv[2]
+    subset_testing = int(sys.argv[3])
+    subset_num = int(sys.argv[4])
+else:
+    algorithm = "foster"
+    dataset = "cifar10"
+    subset_testing = True
+    subset_num = 1
 
-algorithm = "foster"
-dataset = "cifar10"
+
 shapArgs = SHAPArgs(algorithm, dataset)
 
-'''
-# Used when running with a shell script.
-algorithm = sys.argv[1]
-dataset = sys.argv[2]
-#'''
-
 first_last_only = True
-subset_testing = True
-subset_num = 1
+
 filepath = create_shap_value_filepath(shapArgs, first_last_only, subset_testing, subset_num)
 
 print(f"Alg: {algorithm}\nDataset: {dataset}\nFirst/Last: {first_last_only}")

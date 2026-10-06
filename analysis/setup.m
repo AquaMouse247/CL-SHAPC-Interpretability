@@ -1,6 +1,14 @@
 % Setup file
 algs = ["iTAML", "RPSnet", "foster", "memo", "der", "icarl", "dsal", "tagfex", "xder"];
 
+% Formatted names
+formatted_algs = algs;
+formatted_algs(3:5) = upper(algs(3:5));
+formatted_algs(6) = "iCARL";
+formatted_algs(7) = "DS-AL";
+formatted_algs(8) = "TagFex";
+formatted_algs(9) = "X-DER";
+
 %% Dataset configs
 dataset_configs = {};
 
