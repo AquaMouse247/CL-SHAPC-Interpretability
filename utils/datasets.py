@@ -41,3 +41,41 @@ class SHAPTinyImageNet(SHAPDataset):
     num_class = 200
     num_task = 10
     shap_samples = 20
+
+
+from torchvision.datasets.vision import VisionDataset
+from typing import Any
+
+class Bootstrap(VisionDataset):
+    """
+
+    Args:
+
+    """
+
+    def __init__(self, images, labels, orig_idx=None) -> None:
+
+        super().__init__(images, labels)
+
+        self.data = images
+        self.targets = labels
+        if orig_idx is None:
+            self.orig_idx = torch.arange(len(images)).tolist()
+        else:
+            self.orig_idx = orig_idx
+
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        """
+        Args:
+            index (int): Index
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+        img, target = self.data[index], self.targets[index]
+
+        return img, target
+
+
+    def __len__(self) -> int:
+        return len(self.data)

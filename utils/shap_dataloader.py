@@ -95,6 +95,9 @@ class ShapDataloader:
 
         subset = Subset(shap_set, idx)
 
+        # Get samples per class
+        #unique_labels, counts = torch.unique(torch.tensor(shap_set.targets), return_counts=True)
+
         # Create a DataLoader for the subset
         shap_dataloader = DataLoader(subset, batch_size=batch_size, shuffle=shuffle)
 
