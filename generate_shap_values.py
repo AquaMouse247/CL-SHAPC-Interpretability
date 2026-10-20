@@ -26,8 +26,8 @@ if len(sys.argv[1:]) > 2:
 else:
     algorithm = "foster"
     dataset = "cifar10"
-    subset_testing = False
-    subset_num = 1
+    subset_testing = True
+    subset_num = 101
 
 
 shapArgs = SHAPArgs(algorithm, dataset)
@@ -129,6 +129,44 @@ all_shap_values = []
 all_indexes = []
 sample = 0
 
+batch_size=32
+img_ses_idxs = []
+[img_ses_idxs.append([]) for i in range(num_tasks)]
+
+for sample in range(len(test_imgs)):
+    shap_dict[f'{sample}'] = {}
+    sample_task = test_labels[sample] // cls_per_task
+    for e in range(len(explainers)):
+        if first_last_only:
+            if algorithm == "iTAML": boolean_statement = (e == sample_task or e == num_tasks-1+sample_task)
+            else: boolean_statement = (e == sample_task or e == num_tasks-1)
+        else:
+            boolean_statement = test_labels[sample] // cls_per_task <= e
+
+        if boolean_statement:
+            img_ses_idxs[e].append(sample)
+        else:
+            continue
+
+
+for e in range(len(explainers)):
+    print(f"Generating SHAP values for task {e} model.")
+
+    for batch_start in tqdm(range(0, len(img_ses_idxs[e]), batch_size), desc="Progress"):
+        batch_idxs = img_ses_idxs[e][batch_start:batch_start + batch_size]
+        #batch_inputs = test_imgs[batch_idxs]
+        batch_inputs = test_imgs[batch_idxs]
+
+        # Calculate SHAP values for the entire mini-batch at once
+        shap_values, indexes = explainers[e].shap_values(batch_inputs, ranked_outputs=1)
+        #shap_dict[f'{sample}'][f'ses{e}'] = {'shap_values': shap_values, 'idxs': indexes}
+        #shap_dict[f'{sample}']['true_label'] = test_labels[sample].item()
+
+        for batch_idx, subset_idx in enumerate(batch_idxs):
+            val, idx_val = shap_values[batch_idx], indexes[batch_idx]
+            shap_dict[f'{subset_idx}'][f'ses{e}'] = {"shap_values": val, "idxs": idx_val}
+
+'''
 for sample in tqdm(range(len(test_imgs)), desc="Progress"):
     shap_dict[f'{sample}'] = {}
     sample_task = test_labels[sample] // cls_per_task
@@ -147,16 +185,13 @@ for sample in tqdm(range(len(test_imgs)), desc="Progress"):
             shap_dict[f'{sample}']['true_label'] = test_labels[sample].item()
         else:
             continue
-
+'''
 
     # Intermittent saving in case of crash
     #np.save(filepath, shap_dict)
 
 # Final save shap values to filepath
 np.save(filepath, shap_dict)
-
-
-
 
 
 
