@@ -26,8 +26,8 @@ if len(sys.argv[1:]) > 2:
 else:
     algorithm = "foster"
     dataset = "cifar10"
-    subset_testing = True
-    subset_num = 101
+    subset_testing = False
+    subset_num = 1
 
 
 shapArgs = SHAPArgs(algorithm, dataset)
