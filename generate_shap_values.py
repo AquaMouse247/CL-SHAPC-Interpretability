@@ -150,7 +150,7 @@ for sample in range(len(test_imgs)):
 
 
 for e in range(len(explainers)):
-    print(f"Generating SHAP values for task {e} model.")
+    #print(f"Generating SHAP values for task {e} model.")
 
     for batch_start in tqdm(range(0, len(img_ses_idxs[e]), batch_size), desc="Progress"):
         batch_idxs = img_ses_idxs[e][batch_start:batch_start + batch_size]
