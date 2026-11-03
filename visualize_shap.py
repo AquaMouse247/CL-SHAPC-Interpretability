@@ -30,14 +30,14 @@ def format_name(name):
 
 
 def add_algorithm_labels(fig, axis, algs):
-
     fig.canvas.draw()
 
     # Offsets in figure coordinate space (0 to 1)
     y_offset_top = 0.08  # Upper tier (further above)
 
     # Pairs of columns to place text between: (0, 1), (2, 3), (4, 5)
-    for i, col_left in enumerate([0, 2, 4]):
+    col_list = [0, 2, 4, 6] if all_scns else [0, 2, 4]
+    for i, col_left in enumerate(col_list):
         ax_left = axis[0, col_left]
         ax_right = axis[0, col_left + 1]
 
@@ -46,7 +46,7 @@ def add_algorithm_labels(fig, axis, algs):
         bbox_right = ax_right.get_position()
 
         # Midpoint horizontally between the two subplots
-        x_mid = (bbox_left.x1 + bbox_right.x0) / 2.0
+        x_mid = (bbox_left.x0+ bbox_right.x1) / 2.0
 
         fig.text(x_mid, bbox_left.y1 + y_offset_top, format_name(algs[i]),
                 ha="center",va="bottom", fontsize=14,
@@ -100,13 +100,19 @@ def get_pred_labels(data_name, data_classes, alg_name, sample, mat_file=False):
 
 
 # Select Algorithm and Dataset
-algorithm = "RPSnet"
+algorithm = "tagfex"
 dataset = "cifar100"
 
-vis_all_algs = True
+vis_all_algs = False
 all_algs = ["iTAML", "RPSnet", "foster", "memo", "der", "icarl", "tagfex", "dsal", "xder"]
+all_scns = True
+desired_samps = [22, 912, 66, 637] # [Scn1, Scn2, Scn3, Scn4]
+
 if vis_all_algs:
     alg_list = all_algs
+    all_scns = False
+elif all_scns:
+    alg_list = [algorithm] * 4
 else:
     alg_list = [algorithm]
 
@@ -125,6 +131,8 @@ for a, alg in enumerate(alg_list):
         if a % 3 == 0:
             plt_fig, plt_axis = plt.subplots(2, 3 * 2, figsize=(3 * 4, 4))
             current_algs = []
+    elif all_scns:
+        if a==0: plt_fig, plt_axis = plt.subplots(2, 8, figsize=(14, 4.8))
     else:
         plt_fig, plt_axis = plt.subplots(2, 2, figsize=(6, 6))
 
@@ -154,7 +162,10 @@ for a, alg in enumerate(alg_list):
     Samples to Try: 55
     '''
 
-    sample = 953
+    if all_scns:
+        sample = desired_samps[a]
+    else:
+        sample = 21
     test_sample = shap_dict[f'{sample}']
     test_sess = list(test_sample.keys())
     test_sess.remove(test_sess[1])
@@ -222,7 +233,10 @@ for a, alg in enumerate(alg_list):
     # Look for a sample that was predicted correctly, feature consistency should be high
     # Look for a sample that was predicted incorrectly, but check if feature consistency is still high -> indicates trustworthiness
 
-    alg_col_index = (a - (a//3*3)) * 2
+    if all_scns:
+        alg_col_index = a * 2
+    else:
+        alg_col_index = (a - (a//3*3)) * 2
 
     #print("Row:",alg_row_index)
     #print("Col:", alg_col_index)
@@ -231,7 +245,10 @@ for a, alg in enumerate(alg_list):
         ax.imshow(test_img_np)
         ax.set_title("Original Image")
         label_str = f"True Label: {test_classes[test_label]}"
-        if alg_col_index == 0: ax.set_xlabel("\n".join(textwrap.wrap(label_str, width=12)), fontsize=10)
+        if all_scns:
+            ax.set_xlabel("\n".join(textwrap.wrap(label_str, width=14)), fontsize=10)
+        elif alg_col_index == 0:
+            ax.set_xlabel("\n".join(textwrap.wrap(label_str, width=14)), fontsize=10)
     for ax in plt_axis[:, alg_col_index+1]:
         ax.imshow(np.mean(test_img_np, axis=2), cmap="gray")
 
@@ -244,11 +261,11 @@ for a, alg in enumerate(alg_list):
 
     hm1 = plt_axis[0, alg_col_index+1].imshow(s0, cmap='plasma', vmin=vmin, vmax=vmax, alpha=0.5)
     plt_axis[0, alg_col_index+1].set_title(labels[0])
-    plt_axis[0, alg_col_index + 1].set_xlabel(f"Pred: {preds[0]}")
+    plt_axis[0, alg_col_index + 1].set_xlabel("\n".join(textwrap.wrap(f"Prediction: {preds[0]}", width=14)), fontsize=10)
 
     hm2 = plt_axis[1, alg_col_index+1].imshow(s1, cmap='plasma', vmin=vmin, vmax=vmax, alpha=0.5)
     plt_axis[1, alg_col_index+1].set_title(labels[1])
-    plt_axis[1, alg_col_index + 1].set_xlabel(f"Pred: {preds[1]}")
+    plt_axis[1, alg_col_index + 1].set_xlabel("\n".join(textwrap.wrap(f"Prediction: {preds[1]}", width=14)), fontsize=10)
 
     for ax in plt_axis.flat:
         ax.set_xticks([])
@@ -259,16 +276,22 @@ for a, alg in enumerate(alg_list):
     #plt_fig.suptitle(f"{alg}")
     #plt.show()
 
-    if a in [2, 5, 8]:
-
-        cbar = plt_fig.colorbar(hm2, ax=plt_axis.ravel().tolist(), orientation='vertical', pad=0.04)
-        cbar.ax.set_title("Most Important", pad=8, size=12)
-        cbar.ax.set_xlabel("Least Important", labelpad=8, size=12)
+    if all_scns and a == 3:
+        plt_fig.subplots_adjust(left=0.04, right=0.86)
 
         # ADD Algorithm Labels
-        add_algorithm_labels(plt_fig, plt_axis, current_algs)
+        add_algorithm_labels(plt_fig, plt_axis, [f"Scenario {i}" for i in range(1,5)])
+    if vis_all_algs:
+        if a in [2, 5, 8]:
 
-        #figs.append(copy.deepcopy(plt_fig))
+            cbar = plt_fig.colorbar(hm2, ax=plt_axis.ravel().tolist(), orientation='vertical', pad=0.04)
+            cbar.ax.set_title("Most Important", pad=8, size=12)
+            cbar.ax.set_xlabel("Least Important", labelpad=8, size=12)
+
+            # ADD Algorithm Labels
+            add_algorithm_labels(plt_fig, plt_axis, current_algs)
+
+            #figs.append(copy.deepcopy(plt_fig))
 
 
 #print(figs)
@@ -276,9 +299,35 @@ for a, alg in enumerate(alg_list):
 #    f.show(blocking=True)
 #    pass
 if not vis_all_algs:
+
+    # 1. Force a draw so subplot positions are fully computed
+    plt_fig.canvas.draw()
+
+    # 2. Get the bounding boxes of the top-right and bottom-right subplots
+    top_right_box = plt_axis[0, -1].get_position()
+    bottom_right_box = plt_axis[-1, -1].get_position()
+
+    # 3. Calculate colorbar dimensions to match your subplots' height
+    pad = 0.05  # Gap between the last subplot and the colorbar
+    cbar_width = 0.012  # Width of the colorbar strip
+
+    cbar_left = top_right_box.x1 + pad
+    cbar_bottom = bottom_right_box.y0
+    cbar_height = top_right_box.y1 - bottom_right_box.y0
+
+    # 4. Create the dedicated axis: [left, bottom, width, height]
+    cax = plt_fig.add_axes([cbar_left, cbar_bottom, cbar_width, cbar_height])
+
+    # 5. Attach the colorbar to 'cax' instead of stealing space from 'ax'
+    cbar = plt_fig.colorbar(hm2, cax=cax, orientation="vertical")
+    cbar.ax.set_title("Most Important", pad=8, size=12)
+    cbar.ax.set_xlabel("Least Important", labelpad=8, size=12)
+
+    '''
     cbar = plt_fig.colorbar(hm2, ax=plt_axis.ravel().tolist(), orientation='vertical', pad=0.04)
     cbar.ax.set_title("Most Important", pad=8, size=12)
     cbar.ax.set_xlabel("Least Important", labelpad=8, size=12)
-    plt.suptitle(format_name(algorithm), fontsize=14, fontweight="bold")
+    if not all_scns: plt.suptitle(format_name(algorithm), fontsize=14, fontweight="bold")
+    '''
 
 plt.show()
