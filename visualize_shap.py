@@ -148,24 +148,27 @@ for a, alg in enumerate(alg_list):
     filepath = create_shap_value_filepath(shapArgs, first_last_only) + ".npy"
     #print("Current Filepath:", filepath)
 
-    shap_values_loaded = np.load(filepath, allow_pickle=True)  # ['shap_dict']
-    #shap_values_loaded = np.load(f"analysis/{algorithm}/{dataset}/shap_values_first_last_1000.npy", allow_pickle=True)  # ['shap_dict']
-    num_imgs = len(shap_values_loaded[()].keys())
-    shap_dict = {}
-    for i in range(num_imgs):
-        shap_dict[f'{i}'] = shap_values_loaded[()][f'{i}']
+    '''
+        Bad Sample: 80
+        Good Sample: 132
 
-    '''
-    Bad Sample: 80
-    Good Sample: 132
-    
-    Samples to Try: 55
-    '''
+        Samples to Try: 55
+        '''
 
     if all_scns:
         sample = desired_samps[a]
     else:
         sample = 21
+
+    shap_values_loaded = np.load(filepath, allow_pickle=True)  # ['shap_dict']
+    #shap_values_loaded = np.load(f"analysis/{algorithm}/{dataset}/shap_values_first_last_1000.npy", allow_pickle=True)  # ['shap_dict']
+    #num_imgs = len(shap_values_loaded[()].keys())
+    #shap_dict = {}
+    #for i in range(num_imgs):
+    #    shap_dict[f'{i}'] = shap_values_loaded[()][f'{i}']
+
+    shap_dict = {f'{sample}': shap_values_loaded[()][f'{sample}']}
+
     test_sample = shap_dict[f'{sample}']
     test_sess = list(test_sample.keys())
     test_sess.remove(test_sess[1])
