@@ -148,7 +148,7 @@ for sample in range(len(test_imgs)):
         else:
             continue
 
-
+'''
 for e in range(len(explainers)):
     #print(f"Generating SHAP values for task {e} model.")
 
@@ -165,8 +165,9 @@ for e in range(len(explainers)):
         for batch_idx, subset_idx in enumerate(batch_idxs):
             val, idx_val = shap_values[batch_idx], indexes[batch_idx]
             shap_dict[f'{subset_idx}'][f'ses{e}'] = {"shap_values": val, "idxs": idx_val}
-
 '''
+
+#'''
 for sample in tqdm(range(len(test_imgs)), desc="Progress"):
     shap_dict[f'{sample}'] = {}
     sample_task = test_labels[sample] // cls_per_task
@@ -185,7 +186,7 @@ for sample in tqdm(range(len(test_imgs)), desc="Progress"):
             shap_dict[f'{sample}']['true_label'] = test_labels[sample].item()
         else:
             continue
-'''
+#'''
 
     # Intermittent saving in case of crash
     #np.save(filepath, shap_dict)
